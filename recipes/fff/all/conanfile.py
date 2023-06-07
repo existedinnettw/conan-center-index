@@ -2,6 +2,8 @@ from conan import ConanFile
 import os
 from conan.tools.files import get, copy
 from conan.tools.cmake import cmake_layout, CMake
+from conan.tools.scm import Version
+from conan.tools.scm.git import Git
 
 class TypeSafe(ConanFile):
     name = 'fff'
@@ -13,7 +15,7 @@ class TypeSafe(ConanFile):
     license = 'MIT'
     topics = 'conan', 'c', 'c++', 'embedded', 'tdd', 'micro-framework', 'fake-functions'
 
-    exports_sources = "*.h", "test/*"
+    exports_sources = "*.h", "CMakeLists.txt", "test/*"
     no_copy_source = True
     generators = "CMakeToolchain", "CMakeDeps"
 
@@ -22,6 +24,7 @@ class TypeSafe(ConanFile):
     #     return "source_subfolder"
 
     def requirements(self):
+        self.build_requires("cmake/[>=3.15 <3.26]")
         self.test_requires("gtest/[~1.12]")
 
     def layout(self):
@@ -31,18 +34,17 @@ class TypeSafe(ConanFile):
         '''
         depend on v1.1 or not. Newest commit add cmake support, which is great
         '''
-        # if not self.conf.get("tools.build:skip_test", default=False):
-        #     cmake = CMake(self)
-        #     cmake.configure(build_script_folder="test", cli_args=["-DFFF_UNIT_TESTING=True"])
-        #     cmake.build()
-        #     self.run(os.path.join(self.cpp.build.bindir, "test_sum"))
+        if Version(self.version) > "1.1":
+            if not self.conf.get("tools.build:skip_test", default=False):
+                cmake = CMake(self)
+                cmake.configure(cli_args=["-DFFF_UNIT_TESTING=True"])
+                cmake.build()
+                cmake.test()
 
     def source(self):
-        get(self, **self.conan_data["sources"][self.version], strip_root=True) #, destination=self._source_subfolder
+        get(self, **self.conan_data["sources"][self.version]) #, destination=self._source_subfolder
 
     def package(self):
-        # self.copy("LICENSE*", dst="licenses", src=self._source_subfolder)
-        # self.copy("fff.h", dst="include", src=self._source_subfolder)
         path=os.path.join(self.package_folder, 'include')
         copy(self, "*.h", self.source_folder, path)
 
