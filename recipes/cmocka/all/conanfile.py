@@ -1,6 +1,7 @@
 from conan import ConanFile
-from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
+from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps, cmake_layout
 from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, rmdir, save
+from conan.tools.build import can_run
 import os
 import textwrap
 
@@ -15,7 +16,6 @@ class CmockaConan(ConanFile):
     description = "A unit testing framework for C"
     topics = ("unit_test", "unittest", "test", "testing", "mock", "mocking")
 
-    package_type = "library"
     settings = "os", "arch", "compiler", "build_type"
     options = {
         "shared": [True, False],
@@ -25,9 +25,8 @@ class CmockaConan(ConanFile):
         "shared": False,
         "fPIC": True,
     }
-
-    def export_sources(self):
-        export_conandata_patches(self)
+    
+    exports_sources="./*"
 
     def config_options(self):
         if self.settings.os == "Windows":
@@ -40,29 +39,29 @@ class CmockaConan(ConanFile):
         self.settings.rm_safe("compiler.libcxx")
 
     def layout(self):
-        cmake_layout(self, src_folder="src")
+        cmake_layout(self)
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
 
     def generate(self):
+        deps = CMakeDeps(self)
+        deps.generate()
         tc = CMakeToolchain(self)
-        tc.variables["WITH_STATIC_LIB"] = not self.options.shared
         tc.variables["WITH_EXAMPLES"] = False
         tc.generate()
 
     def build(self):
-        apply_conandata_patches(self)
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
+        if (not self.conf.get("tools.build:skip_test", default=False)) and can_run(self):
+            cmake.test()
 
     def package(self):
         copy(self, "COPYING", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
         cmake = CMake(self)
         cmake.install()
-        rmdir(self, os.path.join(self.package_folder, "lib", "cmake"))
-        rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
         self._create_cmake_module_variables(
             os.path.join(self.package_folder, self._module_file_rel_path)
         )
@@ -92,11 +91,11 @@ class CmockaConan(ConanFile):
         return os.path.join("lib", "cmake", f"conan-official-{self.name}-variables.cmake")
 
     def package_info(self):
-        self.cpp_info.set_property("cmake_file_name", "cmocka")
-        self.cpp_info.set_property("pkg_config_name", "cmocka")
-        self.cpp_info.set_property("cmake_build_modules", [self._module_file_rel_path])
-        self.cpp_info.libs = ["cmocka{}".format("" if self.options.shared else "-static")]
+        self.cpp_info.libs = ["cmocka"]
 
-        # TODO: to remove in conan v2 once cmake_find_package* generators removed
-        self.cpp_info.build_modules["cmake_find_package"] = [self._module_file_rel_path]
-        self.cpp_info.build_modules["cmake_find_package_multi"] = [self._module_file_rel_path]
+        cmake_files_path=os.path.join(self.package_folder, "lib", "cmake", "cmocka")
+        cmake_files=os.listdir(cmake_files_path)
+        paths=[os.path.join(cmake_files_path, file) for file in cmake_files]+[self._module_file_rel_path]
+        self.cpp_info.set_property(
+            "cmake_build_modules", paths
+        )
