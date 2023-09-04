@@ -1,0 +1,4 @@
+sources:
+  "2.3.0":
+    url: "https://github.com/andrew-gresyk/HFSM2/archive/refs/tags/2.3.0-1.zip"
+    # sha256: "460985413c3b2e80121f7697c6c824a91955a38051de770d7eb946ddafa88460"
