@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.15)
 
-project(test_package LANGUAGES CXX)
+project(PackageTest LANGUAGES CXX)
 
 find_package(hfsm2 REQUIRED CONFIG)
 
-add_executable(${CMAKE_PROJECT_NAME} test_package.cpp)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE hfsm2::hfsm2)
+add_executable(example example.cpp)
+target_link_libraries(example hfsm2::hfsm2)
