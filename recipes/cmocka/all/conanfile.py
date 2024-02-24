@@ -1,7 +1,7 @@
 from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps, cmake_layout
 from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get, rmdir, save
-from conan.tools.build import can_run
+from conan.tools.scm import Version
 import os
 import textwrap
 
@@ -91,7 +91,13 @@ class CmockaConan(ConanFile):
         return os.path.join("lib", "cmake", f"conan-official-{self.name}-variables.cmake")
 
     def package_info(self):
-        self.cpp_info.libs = ["cmocka"]
+        self.cpp_info.set_property("cmake_file_name", "cmocka")
+        self.cpp_info.set_property("pkg_config_name", "cmocka")
+        self.cpp_info.set_property("cmake_build_modules", [self._module_file_rel_path])
+        lib_suffix = ""
+        if Version(self.version) < "1.1.7" and not self.options.shared:
+            lib_suffix = "-static"
+        self.cpp_info.libs = ["cmocka" + lib_suffix]
 
         cmake_files_path=os.path.join(self.package_folder, "lib", "cmake", "cmocka")
         cmake_files=os.listdir(cmake_files_path)
