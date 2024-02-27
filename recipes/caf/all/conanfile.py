@@ -127,10 +127,21 @@ class CAFConan(ConanFile):
         if self.settings.os == "Windows":
             self.cpp_info.components["caf_io"].system_libs = ["ws2_32"]
 
+        self.cpp_info.components["caf_test"].set_property("cmake_target_name", "CAF::test")
+        self.cpp_info.components["caf_test"].libs = ["caf_test"]
+        self.cpp_info.components["caf_test"].requires = ["caf_core"]
+
         if self.options.with_openssl:
             self.cpp_info.components["caf_openssl"].set_property("cmake_target_name", "CAF::openssl")
             self.cpp_info.components["caf_openssl"].libs = ["caf_openssl"]
             self.cpp_info.components["caf_openssl"].requires = ["caf_io", "openssl::openssl"]
+
+        if self.options.with_openssl:
+            self.cpp_info.components["caf_net"].set_property("cmake_target_name", "CAF::net")
+            self.cpp_info.components["caf_net"].libs = ["caf_net"]
+            self.cpp_info.components["caf_net"].requires = ["caf_core", "openssl::openssl"]
+            if self.settings.os == "Windows":
+                self.cpp_info.components["caf_net"].system_libs = ["ws2_32"]
 
         # TODO: to remove in conan v2 once cmake_find_package* generators removed
         self.cpp_info.names["cmake_find_package"] = "CAF"
