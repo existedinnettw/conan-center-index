@@ -103,11 +103,11 @@ class SDLConan(ConanFile):
         export_conandata_patches(self)
 
     def config_options(self):
-        # Don't depend on iconv on macOS by default
+        # Don't depend on iconv on Apple by default
         # SDL2 depends on many system freamworks,
         # which depend on the system-provided iconv
         # and can conflict with the Conan provided one
-        self.options.iconv = self.settings.os != "Macos"
+        self.options.iconv = not is_apple_os(self)
 
         if self.settings.os == "Windows":
             del self.options.fPIC
@@ -353,6 +353,10 @@ class SDLConan(ConanFile):
         rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
         rmdir(self, os.path.join(self.package_folder, "libdata"))
         rmdir(self, os.path.join(self.package_folder, "share"))
+        if self.settings.os == "Android":
+            copy(self, pattern="*",
+                src=os.path.join(self.source_folder, "android-project", "app", "src", "main", "java"),
+                dst=os.path.join(self.package_folder, "share", "java", "SDL2"))
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "SDL2")
