@@ -1,30 +1,29 @@
-import os.path
+import os
 
 from conan import ConanFile
+from conan.tools.files import copy
 from conan.tools.build import check_min_cppstd
-from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
-from conan.tools.files import copy, get, rmdir
+from conan.tools.layout import basic_layout
+from conan.tools.files import get
 
+required_conan_version = ">=2.0"
 
-class HFSM2(ConanFile):
+class Hfsm2Conan(ConanFile):
     name = "hfsm2"
-    description = " High-Performance Hierarchical Finite State Machine Framework "
+    description = "High-Performance Hierarchical Finite State Machine Framework"
     license = "MIT"
-    url = "https://github.com/andrew-gresyk/HFSM2"
-    homepage = "https://github.com/andrew-gresyk/HFSM2"
-    topics = "fsm", "header-only", "cpp11"
-    generators = "CMakeToolchain", "CMakeDeps"
+    topics = ("embedded", "fsm", "state-machine", "cpp", "modern-cpp", "game-development",
+              "cpp11", "embedded-systems", "template-metaprogramming", "header-only",
+              "mit-license", "fsm-library", "hierarchical-state-machine", "game-dev", "hfsm")
+    homepage = "https://hfsm.dev/"
+    url = "https://github.com/conan-io/conan-center-index"
 
-    # header only
-    # https://docs.conan.io/2/tutorial/creating_packages/other_types_of_packages/header_only_packages.html?highlight=no_copy_source
+    package_type = "header-library"
     settings = "os", "arch", "compiler", "build_type"
-    exports_sources = "include/*", "test/*", "include/hfsm2"
     no_copy_source = True
 
-    def requirements(self):
-        self.test_requires("doctest/2.4.11")
-        # self.test_requires("xoshiro-cpp/1.1") #require cpp17, and for development only
-        self.tool_requires("cmake/[>=3.15 <4]")
+    def layout(self):
+        basic_layout(self, src_folder="src")
 
     def validate(self):
         check_min_cppstd(self, 11)
@@ -32,30 +31,10 @@ class HFSM2(ConanFile):
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
 
-    def layout(self):
-        cmake_layout(self)
-
-    def build(self):
-        # cmake = CMake(self)
-        # cmake.configure()
-        # cmake.build()
-        # hfsm2 not yet implement it in cmake.
-        # if not self.conf.get("tools.build:skip_test", default=False):
-        #     cmake = CMake(self)
-        #     cmake.configure(build_script_folder="test")
-        #     cmake.build()
-        #     cmake.test()
-        pass
-
     def package(self):
-        # This will also copy the "include" folder
-        copy(self, "*.hpp", src=self.source_folder, dst=self.package_folder)
+        copy(self, "LICENSE", self.source_folder, os.path.join(self.package_folder, "licenses"))
+        copy(self, "*.hpp", os.path.join(self.source_folder, "include"), os.path.join(self.package_folder, "include"))
 
     def package_info(self):
-        # For header-only packages, libdirs and bindirs are not used
-        # so it's necessary to set those as empty.
         self.cpp_info.bindirs = []
         self.cpp_info.libdirs = []
-
-    def package_id(self):
-        self.info.clear()
